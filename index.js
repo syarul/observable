@@ -1,6 +1,8 @@
 ;(function () {
 "use strict";
 
+var useHook = false;
+
 // bind a to b -- One Way Binding
 function bind1(a, b) {
   a(b()); b(a)
@@ -54,20 +56,36 @@ function off(emitter, event, listener) {
     .call(emitter, event, listener, false)
 }
 
+// accessor for observable value
+function fun() {
+  var wrapped = [].shift.call(arguments)
+  var hooks = [].slice.call(arguments)
+  return hooks.length < 1 ? wrapped()
+    : function () {
+      return wrapped.apply(this, [].concat.call(hooks.map(h => h()), [].slice.call(arguments)))
+    }
+}
+
 //An observable that stores a value.
 
-function value (initialValue) {
-  var _val = initialValue, listeners = []
+function value(initialValue, reducer) {
+  var _val = isGet(reducer) ?
+    initialValue
+    : reducer, listeners = []
   observable.set = function (val) {
-    all(listeners, _val = val)
+    all(listeners, _val = isGet(reducer) ? val : initialValue(_val, val))
   }
-  return observable
+  // transform into useState/useReducer
+  // i.e const [state, setState] = useState('foo')
+  return useHook ? [observable, function (val) {
+    all(listeners, _val = isGet(reducer) ? val : initialValue(_val, val))
+  }] : observable
 
   function observable(val) {
     return (
       isGet(val) ? _val
-    : isSet(val) ? all(listeners, _val = val)
-    : (listeners.push(val), val(_val), function () {
+      : isSet(val) ? _val = isGet(reducer) ? val : initialValue(_val, val)
+      : (listeners.push(val), val(_val), function () {
         remove(listeners, val)
       })
   )}}
@@ -232,6 +250,8 @@ exports.toggle    = toggle
 exports.hover     = function (e) { return toggle(e, 'mouseover', 'mouseout')}
 exports.focus     = function (e) { return toggle(e, 'focus', 'blur')}
 exports.signal    = signal
+exports.fun       = fun
+exports.useHook   = function (bool) { useHook = bool }
 
 if('object' === typeof module) module.exports = exports
 else                           window.observable = exports
