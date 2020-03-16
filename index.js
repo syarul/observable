@@ -196,6 +196,8 @@ function compute (observables, compute) {
   }), init = true
 
   var v = value()
+  
+  v = useHook ? [v] : v
 
   observables.forEach(function (f, i) {
     f(function (val) {
