@@ -73,18 +73,18 @@ function value(initialValue, reducer) {
     initialValue
     : reducer, listeners = []
   observable.set = function (val) {
-    useHook ? _val = isGet(reducer) ? val : initialValue(_val, val) : all(listeners, _val = val)
+    useHook ? all(listeners, _val = isGet(reducer) ? val : initialValue(_val, val)) : all(listeners, _val = val)
   }
   // transform into useState/useReducer
   // i.e const [state, setState] = useState('foo')
   return useHook ? [observable, function (val) {
-    observable(val)
+    all(listeners, _val = isGet(reducer) ? val : initialValue(_val, val))
   }] : observable
 
   function observable(val) {
     return (
       isGet(val) ? _val
-        : isSet(val) ? isSet(val) ? useHook ? _val = isGet(reducer) ? val : initialValue(_val, val) : all(listeners, _val = val)
+        : isSet(val) ? useHook ? all(listeners, _val = isGet(reducer) ? val : initialValue(_val, val)) : all(listeners, _val = val)
       : (listeners.push(val), val(_val), function () {
         remove(listeners, val)
       })
