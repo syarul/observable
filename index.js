@@ -197,8 +197,8 @@ function compute (observables, compute) {
 
   var v = value()
   
-  v = useHook ? [v] : v
-
+  v = useHook ? v[0] : v
+  
   observables.forEach(function (f, i) {
     f(function (val) {
       cur[i] = val
